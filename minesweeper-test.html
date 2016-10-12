@@ -11,6 +11,93 @@
   <div id="qunit-fixture"></div>
   <script src="https://code.jquery.com/qunit/qunit-2.0.1.js"></script>
   <script>
+    var createLinearBoard = function(length, random_func) {
+      var mineFields = new Set();
+      var revealedFields = new Set();
+      random_func = random_func || Math.random;
+
+      return {
+        placeMine: function(position) {
+          mineFields.add(position);
+        },
+        removeMine: function(position) {
+          mineFields.delete(position);
+        },
+        isMine: function(position) {
+          return mineFields.has(position);
+        },
+        revealField: function(position) {
+          revealedFields.add(position);
+        },
+        isRevealedField: function(position) {
+          return revealedFields.delete(position);
+        },
+        swapFields: function(position1, position2) {
+          var isMineAtPosition1 = this.isMine(position1);
+          var isMineAtPosition2 = this.isMine(position2);
+          
+          if (isMineAtPosition1) {
+            this.placeMine(position2);
+          } else {
+            this.removeMine(position2);
+          }
+
+          if (isMineAtPosition2) {
+            this.placeMine(position1);
+          } else {
+            this.removeMine(position1);
+          }
+        },
+        shuffle: function() {
+          for (var currentIndex = 0; currentIndex < length; currentIndex++) {
+            var swapIndex = Math.floor(random_func() * length);
+            this.swapFields(currentIndex, swapIndex);
+          }
+        }
+      };
+    };
+
+    QUnit.module("Linear Board");
+
+    QUnit.test("swap a mine field with an empty field", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      linearBoard.placeMine(0);
+      linearBoard.swapFields(0, 1);
+
+      assert.notOk(linearBoard.isMine(0), "Mine is not here anymore");
+      assert.ok(linearBoard.isMine(1), "Swapped mine found");
+    });
+
+    QUnit.test("shuffle a board with 3 mines and length of three", function(assert) {
+      var linearBoard = createLinearBoard(3);
+      linearBoard.placeMine(0);
+      linearBoard.placeMine(1);
+      linearBoard.placeMine(2);
+      linearBoard.shuffle();
+
+      assert.ok(linearBoard.isMine(0), "Mine found");
+      assert.ok(linearBoard.isMine(1), "Mine found");
+      assert.ok(linearBoard.isMine(2), "Mine found");
+    });
+
+    QUnit.test("shuffle a board with 3 mines and random=1", function(assert) {
+      var random_func = function() {return 0;}
+      var linearBoard = createLinearBoard(3, random_func);
+      linearBoard.placeMine(0);
+      linearBoard.shuffle();
+
+      assert.notOk(linearBoard.isMine(0), "no Mine found");
+      assert.ok(linearBoard.isMine(1), "Mine found");
+      assert.notOk(linearBoard.isMine(2), "no Mine found");
+    });
+
+    QUnit.test("reveal field", function(assert) {
+      var linearBoard = createLinearBoard(3);
+      assert.notOk(linearBoard.isRevealedField(0));
+
+      linearBoard.revealField(0);
+      assert.ok(linearBoard.isRevealedField(0));
+    });
   </script>
 </body>
 </html>
