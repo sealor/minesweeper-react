@@ -10,53 +10,8 @@
   <div id="qunit"></div>
   <div id="qunit-fixture"></div>
   <script src="https://code.jquery.com/qunit/qunit-2.0.1.js"></script>
+  <script src="board.js"></script>
   <script>
-    var createLinearBoard = function(length, random_func) {
-      var mineFields = new Set();
-      var revealedFields = new Set();
-      random_func = random_func || Math.random;
-
-      return {
-        placeMine: function(position) {
-          mineFields.add(position);
-        },
-        removeMine: function(position) {
-          mineFields.delete(position);
-        },
-        isMine: function(position) {
-          return mineFields.has(position);
-        },
-        revealField: function(position) {
-          revealedFields.add(position);
-        },
-        isRevealedField: function(position) {
-          return revealedFields.delete(position);
-        },
-        swapFields: function(position1, position2) {
-          var isMineAtPosition1 = this.isMine(position1);
-          var isMineAtPosition2 = this.isMine(position2);
-          
-          if (isMineAtPosition1) {
-            this.placeMine(position2);
-          } else {
-            this.removeMine(position2);
-          }
-
-          if (isMineAtPosition2) {
-            this.placeMine(position1);
-          } else {
-            this.removeMine(position1);
-          }
-        },
-        shuffle: function() {
-          for (var currentIndex = 0; currentIndex < length; currentIndex++) {
-            var swapIndex = Math.floor(random_func() * length);
-            this.swapFields(currentIndex, swapIndex);
-          }
-        }
-      };
-    };
-
     QUnit.module("Linear Board");
 
     QUnit.test("swap a mine field with an empty field", function(assert) {
@@ -97,6 +52,69 @@
 
       linearBoard.revealField(0);
       assert.ok(linearBoard.isRevealedField(0));
+    });
+
+    QUnit.module("Cartesian Board");
+
+    QUnit.test("check for mine at x=1 and y=0", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      var cartesianBoard = createCartesianBoard(10, 10, linearBoard);
+      linearBoard.placeMine(1);
+
+      assert.ok(cartesianBoard.isMineAtXY(1, 0));
+    });
+
+    QUnit.test("check for revealed field at x=0 and y=1", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      var cartesianBoard = createCartesianBoard(10, 10, linearBoard);
+      linearBoard.revealField(10);
+
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(0, 1));
+    });
+
+    QUnit.test("count two mines around", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      var cartesianBoard = createCartesianBoard(10, 10, linearBoard);
+      cartesianBoard.placeMineAtXY(0, 0);
+      cartesianBoard.placeMineAtXY(1, 1);
+
+      assert.equal(cartesianBoard.countMinesAroundXY(1, 0), 2);
+    });
+
+    QUnit.test("reveal one field", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      var cartesianBoard = createCartesianBoard(10, 10, linearBoard);
+      cartesianBoard.placeMineAtXY(1, 0);
+      cartesianBoard.placeMineAtXY(1, 1);
+      cartesianBoard.placeMineAtXY(0, 1);
+      cartesianBoard.revealFieldAtXY(0, 0);
+
+      assert.ok(linearBoard.isRevealedField(0, 0));
+    });
+
+    QUnit.test("reveal four fields", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      var cartesianBoard = createCartesianBoard(10, 10, linearBoard);
+      cartesianBoard.placeMineAtXY(2, 0);
+      cartesianBoard.placeMineAtXY(2, 1);
+      cartesianBoard.placeMineAtXY(2, 2);
+      cartesianBoard.placeMineAtXY(1, 2);
+      cartesianBoard.placeMineAtXY(0, 2);
+      cartesianBoard.revealFieldAtXY(0, 0);
+
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(0, 0));
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(1, 0));
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(0, 1));
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(1, 1));
+    });
+
+    QUnit.test("reveal all fields", function(assert) {
+      var linearBoard = createLinearBoard(100);
+      var cartesianBoard = createCartesianBoard(10, 10, linearBoard);
+      cartesianBoard.revealFieldAtXY(0, 0);
+
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(0, 0));
+      assert.ok(cartesianBoard.isRevealedFieldAtXY(9, 9));
     });
   </script>
 </body>
