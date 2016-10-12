@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Minesweeper</title>
+    <script src="https://unpkg.com/react@15.3.2/dist/react.js"></script>
+    <script src="https://unpkg.com/react-dom@15.3.2/dist/react-dom.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+
+    <script src="board.js"></script>
+    <style>
+      button {
+        width: 30px;
+        height: 30px;
+      }
+
+      button.revealed {
+        opacity: 0.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script type="text/babel">
+    var PlayGround = React.createClass({
+      getInitialState: function() {
+        var width = 20;
+        var height = 10;
+        var linearBoard = createLinearBoard(width * height);
+        var cartesianBoard = createCartesianBoard(width, height, linearBoard);
+
+        for (var i = 0; i < 10; i++) {
+          linearBoard.placeMine(i);
+        }
+        linearBoard.shuffle();
+
+        return { board: cartesianBoard, width: width, height: height };
+      },
+      handleFieldClick: function(x, y) {
+        this.state.board.revealFieldAtXY(x, y);
+        this.setState(this.state);
+      },
+      render: function() {
+        var elements = [];
+        for (var y = 0; y < this.state.height; y++) {
+          elements.push(<Row key={y} board={this.state.board} y={y} width={this.state.width} handleFieldClick={this.handleFieldClick} />);
+        }
+        return (
+          <div id="playground">
+            {elements}
+          </div>
+        );
+      }
+    });
+
+    var Row = React.createClass({
+      render: function() {
+        var elements = [];
+        for (var x = 0; x < this.props.width; x++) {
+          elements.push(<MineField key={x} board={this.props.board} x={x} y={this.props.y} handleFieldClick={this.props.handleFieldClick} />);
+        }
+        return (
+          <div className="row">{elements}</div>
+        );
+      }
+    });
+
+    var MineField = React.createClass({
+      handleFieldClick: function() {
+        this.props.handleFieldClick(this.props.x, this.props.y);
+      },
+      render: function() {
+        var text = "";
+        var cssClass = "";
+
+        if (this.props.board.isRevealedFieldAtXY(this.props.x, this.props.y)) {
+          cssClass = "revealed";
+
+          if (this.props.board.isMineAtXY(this.props.x, this.props.y)) {
+            text = "X";
+          } else {
+            var mineCountAround = this.props.board.countMinesAroundXY(this.props.x, this.props.y);
+            if (mineCountAround > 0) {
+              text = mineCountAround;
+            }
+          }
+        }
+
+        return (
+          <button type="button" onClick={this.handleFieldClick} className={cssClass}>
+            <span>{text}&nbsp;</span>
+          </button>
+        );
+      }
+    });
+
+    ReactDOM.render(
+      <PlayGround />,
+      document.getElementById('content')
+    );
+    </script>
+  </body>
+</html>
